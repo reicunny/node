@@ -1,0 +1,60 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag to build'
+        required: false
+        default: 'master'
+
+env:
+  GITHUB_OWNER: mysteriumnetwork
+  GITHUB_REPO: node
+  GITHUB_SNAPSHOT_REPO: node-builds
+  GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_EC2_METADATA_DISABLED: true
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest-m
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Prepare environment
+        run: |
+          BUILD_VERSION="$(git describe --abbrev=0 --tags)-1manual-$(date '+%Y%m%dT%H%M')-$(echo ${GITHUB_SHA} | cut -c1-8)"
+          
+          cat <<EOT >> env.sh
+          export RELEASE_BUILD=false;
+          export RC_BUILD=false;
+          export PR_BUILD=false;
+          export SNAPSHOT_BUILD=false;
+          export BUILD_VERSION=$BUILD_VERSION;
+          export BUILD_NUMBER="${{ github.run_id }}";
+          export BUILD_COMMIT="$(echo ${GITHUB_SHA} | cut -c1-8)";
+          export BUILD_BRANCH="${GITHUB_REF_NAME}";
+          EOT
+
+      - name: Build Windows package
+        run: |
+          source env.sh
+          go run mage.go -v PackageWindowsAmd64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-amd64
+          path: build/package/*.zip
+          if-no-files-found: warn
