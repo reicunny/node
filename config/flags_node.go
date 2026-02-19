@@ -229,6 +229,13 @@ var (
 		Value: false,
 	}
 
+	// FlagProxyTimeout sets the timeout for consumer proxy connections.
+	FlagProxyTimeout = cli.DurationFlag{
+		Name:  "proxy.timeout",
+		Usage: "Timeout for consumer proxy connections",
+		Value: 30 * time.Second,
+	}
+
 	// FlagUserspace allows running a node without privileged permissions.
 	FlagUserspace = cli.BoolFlag{
 		Name:  "userspace",
@@ -350,6 +357,7 @@ func RegisterFlagsNode(flags *[]cli.Flag) error {
 		&FlagUserMode,
 		&FlagDVPNMode,
 		&FlagProxyMode,
+		&FlagProxyTimeout,
 		&FlagUserspace,
 		&FlagVendorID,
 		&FlagLauncherVersion,
@@ -413,6 +421,7 @@ func ParseFlagsNode(ctx *cli.Context) {
 	Current.ParseBoolFlag(ctx, FlagUserMode)
 	Current.ParseBoolFlag(ctx, FlagDVPNMode)
 	Current.ParseBoolFlag(ctx, FlagProxyMode)
+	Current.ParseDurationFlag(ctx, FlagProxyTimeout)
 	Current.ParseBoolFlag(ctx, FlagUserspace)
 	Current.ParseStringFlag(ctx, FlagVendorID)
 	Current.ParseStringFlag(ctx, FlagLauncherVersion)

@@ -31,6 +31,7 @@ import (
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 
+	"github.com/mysteriumnetwork/node/config"
 	"github.com/mysteriumnetwork/node/services/wireguard/endpoint/netstack"
 	"github.com/mysteriumnetwork/node/services/wireguard/endpoint/userspace"
 	"github.com/mysteriumnetwork/node/services/wireguard/wgcfg"
@@ -137,7 +138,7 @@ func (c *client) Proxy(tnet *netstack.Net, proxyPort int) error {
 
 	server := http.Server{
 		Addr:              fmt.Sprintf(":%d", proxyPort),
-		Handler:           newProxyHandler(60*time.Second, tnet),
+		Handler:           newProxyHandler(config.Current.GetDuration(config.FlagProxyTimeout.Name), tnet),
 		ReadTimeout:       0,
 		ReadHeaderTimeout: 0,
 		WriteTimeout:      0,
